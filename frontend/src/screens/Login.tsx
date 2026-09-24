@@ -8,7 +8,7 @@ export default function Login() {
   const [msg, setMsg] = useState('');
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setMsg('');
-    const { error } = mode === 'in' ? await supabase.auth.signInWithPassword({ email, password }) : await supabase.auth.signUp({ email, password });
+    const { error } = mode === 'in' ? await supabase.auth.signInWithPassword({ email, password }) : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
     if (error) setMsg(error.message); else if (mode === 'up') setMsg('Check your email to confirm your account, then sign in.');
   };
   return (
