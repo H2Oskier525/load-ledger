@@ -2,7 +2,7 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import cors from 'cors';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { SYNC_TABLES, isSyncTable } from './tables.js';
-import { parseLabradarCsv } from './labradar.js';
+import { parseChronoCsv } from './chrono.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY!;
@@ -72,11 +72,11 @@ app.get('/api/sync/pull', auth, async (req, res) => {
   res.json({ changes: out, serverTime });
 });
 
-app.post('/api/import/labradar', auth, (req, res) => {
+app.post('/api/import/chronograph', auth, (req, res) => {
   try {
     const text = typeof req.body === 'string' ? req.body : req.body?.csv;
     if (!text) return res.status(400).json({ error: 'Send the CSV as text/csv or {"csv": "..."}' });
-    res.json(parseLabradarCsv(text));
+    res.json(parseChronoCsv(text));
   } catch (e: any) {
     res.status(422).json({ error: e.message });
   }

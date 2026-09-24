@@ -5,7 +5,7 @@ import { db, alive, save, remove, type FiringString, type EnvSnapshot } from '..
 import { RecordForm } from '../lib/form';
 import { useLoadOptions } from '../lib/lookups';
 import { velocityStats, fmt, moa } from '../lib/stats';
-import { parseLabradarCsv } from '../lib/labradar';
+import { parseChronoCsv, DEVICE_LABELS, type ChronoDevice } from '../lib/chrono';
 import { supabase } from '../lib/supabase';
 
 export default function StringDetail() {
@@ -16,6 +16,7 @@ export default function StringDetail() {
   const loads = useLoadOptions();
   const [vel, setVel] = useState('');
   const [msg, setMsg] = useState('');
+  const [device, setDevice] = useState<ChronoDevice | ''>('');
   const velRef = useRef<HTMLInputElement>(null);
   if (!f) return <p>Loading…</p>;
   const st = velocityStats(shots.filter((s) => !s.is_excluded && s.muzzle_velocity_fps).map((s) => s.muzzle_velocity_fps!));
@@ -30,11 +31,11 @@ export default function StringDetail() {
   };
   const importCsv = async (file: File) => {
     try {
-      const r = parseLabradarCsv(await file.text());
+      const r = parseChronoCsv(await file.text(), device || undefined);
       if (shots.length && !confirm(`Add ${r.shots.length} shots to the ${shots.length} already here?`)) return;
       let n = nextNo;
-      for (const s of r.shots) await save('shots', { firing_string_id: f.id, shot_number: n++, muzzle_velocity_fps: s.muzzle_velocity_fps, is_excluded: false, source: 'labradar_csv' });
-      setMsg(`Imported ${r.shots.length} shots${r.series ? ` from series ${r.series}` : ''}.`);
+      for (const s of r.shots) await save('shots', { firing_string_id: f.id, shot_number: n++, muzzle_velocity_fps: s.muzzle_velocity_fps, is_excluded: false, source: `${r.device}_csv` as any });
+      setMsg(`Imported ${r.shots.length} shots from ${DEVICE_LABELS[r.device]}${r.series ? ` series ${r.series}` : ''}${r.units === 'mps' ? ' (converted from m/s)' : ''}.`);
     } catch (e) { setMsg((e as Error).message); }
   };
   const uploadPhoto = async (file: File) => {
@@ -68,7 +69,8 @@ export default function StringDetail() {
         ))}
       </div>
 
-      <label className="btn">Import LabRadar CSV<input hidden type="file" accept=".csv,text/csv" onChange={(e) => e.target.files?.[0] && importCsv(e.target.files[0])} /></label>
+      <div className="grid2"><select value={device} onChange={(e) => setDevice(e.target.value as ChronoDevice | '')}><option value="">Auto-detect chronograph</option>{Object.entries(DEVICE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+      <label className="btn">Import chronograph CSV<input hidden type="file" accept=".csv,text/csv" onChange={(e) => e.target.files?.[0] && importCsv(e.target.files[0])} /></label></div>
       {msg && <p className="notice">{msg}</p>}
 
       <h3>Load & target</h3>

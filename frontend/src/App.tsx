@@ -12,6 +12,7 @@ import Loads from './screens/Loads';
 import SessionScreen from './screens/Session';
 import StringDetail from './screens/StringDetail';
 import Analytics from './screens/Analytics';
+import Admin from './screens/Admin';
 
 function SyncBadge() {
   const [s, setS] = useState<SyncState>({ status: 'idle', pending: 0 });
@@ -34,6 +35,7 @@ export default function App() {
     return () => data.subscription.unsubscribe();
   }, []);
   useEffect(() => { if (session) startSyncLoop(); }, [session?.user.id]);
+  const isAdmin = session?.user.email?.toLowerCase() === 'justin@thesells.net';
   if (session === undefined) return null;
   if (!session) return <Login />;
   return (
@@ -48,10 +50,11 @@ export default function App() {
           <Route path="/sessions/:id" element={<SessionScreen />} />
           <Route path="/strings/:id" element={<StringDetail />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
       <nav className="tabs">
-        <NavLink to="/" end>Home</NavLink><NavLink to="/loads">Loads</NavLink><NavLink to="/analytics">Charts</NavLink>
+        <NavLink to="/" end>Home</NavLink><NavLink to="/loads">Loads</NavLink><NavLink to="/analytics">Charts</NavLink>{isAdmin && <NavLink to="/admin">Requests</NavLink>}
         <button onClick={() => confirm('Sign out? Unsynced records stay on this phone.') && supabase.auth.signOut()}>Sign out</button>
       </nav>
     </BrowserRouter>
