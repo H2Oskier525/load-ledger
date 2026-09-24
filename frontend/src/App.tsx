@@ -14,6 +14,9 @@ import StringDetail from './screens/StringDetail';
 import Analytics from './screens/Analytics';
 import Admin from './screens/Admin';
 import TargetMarker from './screens/TargetMarker';
+import SettingsScreen from './screens/Settings';
+import { SettingsProvider } from './lib/settings';
+import { CARTRIDGES } from './catalog/catalog';
 
 function SyncBadge() {
   const [s, setS] = useState<SyncState>({ status: 'idle', pending: 0 });
@@ -36,10 +39,10 @@ export default function App() {
     return () => data.subscription.unsubscribe();
   }, []);
   useEffect(() => { if (session) startSyncLoop(); }, [session?.user.id]);
-  const isAdmin = session?.user.email?.toLowerCase() === 'justin@thesells.net';
   if (session === undefined) return null;
   if (!session) return <Login />;
   return (
+    <SettingsProvider>
     <BrowserRouter>
       <header className="top"><NavLink to="/" className="brand">Load Ledger</NavLink><SyncBadge /></header>
       <main>
@@ -53,12 +56,14 @@ export default function App() {
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/strings/:id/target" element={<TargetMarker />} />
+          <Route path="/settings" element={<SettingsScreen />} />
         </Routes>
       </main>
       <nav className="tabs">
-        <NavLink to="/" end>Home</NavLink><NavLink to="/loads">Loads</NavLink><NavLink to="/analytics">Charts</NavLink>{isAdmin && <NavLink to="/admin">Requests</NavLink>}
-        <button onClick={() => confirm('Sign out? Unsynced records stay on this phone.') && supabase.auth.signOut()}>Sign out</button>
+        <NavLink to="/" end>Home</NavLink><NavLink to="/loads">Loads</NavLink><NavLink to="/analytics">Charts</NavLink><NavLink to="/settings">Settings</NavLink>
       </nav>
+      <datalist id="cartridge-list">{CARTRIDGES.map((c) => <option key={c.name} value={c.name} />)}</datalist>
     </BrowserRouter>
+    </SettingsProvider>
   );
 }

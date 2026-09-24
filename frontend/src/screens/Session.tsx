@@ -3,7 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, alive, save, remove, type RangeSession } from '../data/db';
 import { RecordForm } from '../lib/form';
 import { useRifleOptions } from '../lib/lookups';
-import { velocityStats, fmt, moa } from '../lib/stats';
+import { velocityStats, vel, velSd, velLabel, group } from '../lib/stats';
+import { useSettings, useWakeLock } from '../lib/settings';
 
 export default function Session() {
   const { id } = useParams();
@@ -13,17 +14,19 @@ export default function Session() {
   const shots = alive(useLiveQuery(() => db.shots.toArray()));
   const loads = alive(useLiveQuery(() => db.load_recipes.toArray()));
   const rifles = useRifleOptions();
+  const { s: st8 } = useSettings();
+  useWakeLock(st8.keepScreenAwake);
   if (!s) return <p>Loading…</p>;
   const newString = async () => {
     const last = strings[strings.length - 1];
-    const sid = await save('firing_strings', { range_session_id: s.id, label: `String ${strings.length + 1}`, target_distance_yards: last?.target_distance_yards ?? 100, load_recipe_id: last?.load_recipe_id });
+    const sid = await save('firing_strings', { range_session_id: s.id, label: `String ${strings.length + 1}`, target_distance_yards: last?.target_distance_yards ?? st8.defaultDistanceYards, load_recipe_id: last?.load_recipe_id });
     nav(`/strings/${sid}`);
   };
   return (
     <div className="stack">
       <RecordForm<RangeSession> key={s.id} submitLabel="Save session details" initial={s} onSubmit={(v) => save('range_sessions', { ...s, ...v })} fields={[
         { name: 'session_date', label: 'Date', type: 'date', required: true },
-        { name: 'rifle_id', label: 'Rifle', type: 'select', options: rifles },
+        { name: 'rifle_id', label: 'Rifle (loads are filtered to its cartridge)', type: 'select', options: rifles },
         { name: 'range_name', label: 'Range' }, { name: 'location', label: 'Location' },
         { name: 'notes', label: 'Notes', type: 'textarea' },
       ]} />
@@ -35,7 +38,7 @@ export default function Session() {
         return (
           <Link key={f.id} to={`/strings/${f.id}`} className="card">
             <div className="row"><b>{f.label}</b><span className="muted">{load?.name || 'No load'}</span></div>
-            <div className="stats"><span>n {st.n}</span><span>Avg {fmt(st.avg, 0)}</span><span>SD {fmt(st.sd)}</span><span>ES {fmt(st.es, 0)}</span><span>MOA {fmt(moa(f.group_size_inches, f.target_distance_yards), 2)}</span></div>
+            <div className="stats"><span>n {st.n}</span><span>Avg {vel(st.avg, st8)} {velLabel(st8)}</span><span>SD {velSd(st.sd, st8)}</span><span>ES {vel(st.es, st8)}</span><span>{group(f.group_size_inches, f.target_distance_yards, st8)}</span></div>
           </Link>
         );
       })}

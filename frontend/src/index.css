@@ -52,3 +52,21 @@ input, select, textarea { width:100%; background:#0b0d0f; color:var(--text); bor
 .scale-line { stroke:#3fb950; stroke-width:2; stroke-dasharray:6 4; } .scale-pt { fill:rgba(63,185,80,.3); stroke:#3fb950; stroke-width:2; }
 .spread-line { stroke:#f85149; stroke-width:1.5; stroke-dasharray:4 3; }
 .btn:disabled, .seg button:disabled { opacity:.4; }
+/* themes */
+:root[data-theme="light"] { --bg:#f5f6f8; --panel:#ffffff; --line:#d5d9df; --text:#15181c; --muted:#5b6570; --accent:#c77700; color-scheme: light; }
+:root[data-theme="sun"] { --bg:#ffffff; --panel:#ffffff; --line:#000; --text:#000; --muted:#222; --accent:#b35900; color-scheme: light; }
+:root[data-theme="sun"] .card, :root[data-theme="sun"] .btn, :root[data-theme="sun"] input, :root[data-theme="sun"] select { border-width:2px; }
+:root[data-theme="light"] input, :root[data-theme="light"] select, :root[data-theme="light"] textarea, :root[data-theme="sun"] input, :root[data-theme="sun"] select, :root[data-theme="sun"] textarea { background:#fff; }
+:root[data-theme="light"] .notice, :root[data-theme="sun"] .notice { background:#fff6e0; }
+:root[data-text="large"] { font-size:19px; } :root[data-text="large"] input, :root[data-text="large"] select { font-size:19px; }
+:root[data-density="compact"] .card { padding:8px; } :root[data-density="compact"] .stack > * + * { margin-top:6px; } :root[data-density="compact"] .btn { padding:7px 10px; }
+.btn.primary { color:#111; } :root[data-theme="light"] .btn.primary, :root[data-theme="sun"] .btn.primary { color:#fff; }
+.seg.small button { padding:7px 4px; font-size:.85rem; }
+.setting { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--line); }
+.setting:last-child { border-bottom:0; } .setting > span { flex:1; } .setting .seg { margin:0; flex:1.4; } .setting input[type=number] { width:100px; }
+.switch { width:22px; height:22px; accent-color: var(--accent); }
+.settings h3 { margin-top:0; color: var(--text); }
+.picker { display:grid; gap:6px; margin:6px 0; } .results { max-height:260px; overflow:auto; display:grid; gap:4px; }
+.result { text-align:left; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:9px; font-size:.9rem; }
+.check { display:flex; gap:6px; align-items:center; font-size:.8rem; color:var(--muted); } .check input { width:auto; }
+.row > select, .row > input { flex:1; }

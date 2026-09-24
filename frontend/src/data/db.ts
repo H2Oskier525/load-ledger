@@ -4,10 +4,10 @@ import Dexie, { type Table } from 'dexie';
 // When we wrap with Capacitor for the App Store / Play Store, this same IndexedDB store lives on the phone.
 // (If we outgrow it, swap this file for a SQLite adapter without touching screens.)
 export interface Base { id: string; user_id?: string; created_at: string; updated_at: string; deleted_at?: string | null; _dirty?: 0 | 1 }
-export interface Rifle extends Base { name: string; manufacturer?: string; model?: string; caliber?: string; barrel_length_inches?: number; twist_rate?: string; barrel_round_count?: number; notes?: string }
-export interface Component extends Base { type: 'bullet' | 'powder' | 'primer' | 'case'; manufacturer?: string; product_name: string; caliber_or_size?: string; weight_grains?: number; notes?: string }
+export interface Rifle extends Base { name: string; cartridge?: string; manufacturer?: string; model?: string; caliber?: string; barrel_length_inches?: number; twist_rate?: string; barrel_round_count?: number; notes?: string }
+export interface Component extends Base { type: 'bullet' | 'powder' | 'primer' | 'case'; manufacturer?: string; product_name: string; caliber_or_size?: string; weight_grains?: number; catalog_key?: string; is_quick_add?: boolean; bullet_diameter_inches?: number; bullet_type?: string; notes?: string }
 export interface ComponentLot extends Base { component_id: string; lot_number: string; purchase_date?: string; notes?: string }
-export interface LoadRecipe extends Base { rifle_id?: string; name: string; cartridge?: string; bullet_lot_id?: string; powder_lot_id?: string; primer_lot_id?: string; case_lot_id?: string; powder_charge_grains?: number; cartridge_overall_length_inches?: number; base_to_ogive_inches?: number; bullet_jump_inches?: number; case_firing_count?: number; neck_tension_inches?: number; trim_length_inches?: number; notes?: string }
+export interface LoadRecipe extends Base { rifle_id?: string; name: string; cartridge?: string; bullet_id?: string; powder_id?: string; primer_id?: string; case_id?: string; bullet_lot_id?: string; powder_lot_id?: string; primer_lot_id?: string; case_lot_id?: string; powder_charge_grains?: number; cartridge_overall_length_inches?: number; base_to_ogive_inches?: number; bullet_jump_inches?: number; case_firing_count?: number; neck_tension_inches?: number; trim_length_inches?: number; notes?: string }
 export interface RangeSession extends Base { rifle_id?: string; session_date: string; range_name?: string; location?: string; notes?: string }
 export interface FiringString extends Base { range_session_id: string; load_recipe_id?: string; label?: string; target_distance_yards?: number; group_size_inches?: number; vertical_spread_inches?: number; horizontal_spread_inches?: number; target_photo_path?: string; target_analysis?: import('../lib/group').TargetAnalysis; notes?: string }
 export interface Shot extends Base { firing_string_id: string; shot_number: number; muzzle_velocity_fps?: number; is_excluded: boolean; exclusion_reason?: string; notes?: string; source: 'manual' | `${'labradar' | 'garmin' | 'magnetospeed' | 'caldwell' | 'generic'}_${'csv' | 'ble'}` }
@@ -43,6 +43,7 @@ class LedgerDB extends Dexie {
       meta: 'key',
     });
     this.version(2).stores({ photos: 'id, uploaded' });
+    this.version(3).stores({ load_recipes: 'id, rifle_id, cartridge, _dirty, updated_at', components: 'id, type, catalog_key, _dirty, updated_at' });
   }
 }
 export const db = new LedgerDB();
