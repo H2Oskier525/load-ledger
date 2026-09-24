@@ -43,3 +43,12 @@ input, select, textarea { width:100%; background:#0b0d0f; color:var(--text); bor
 .seg { display:flex; gap:4px; background:var(--panel); border-radius:10px; padding:4px; margin:12px 0; }
 .seg button { flex:1; background:none; border:0; color:var(--muted); padding:10px 4px; border-radius:8px; font-size:.9rem; }
 .seg button.on { background:var(--accent); color:#111; font-weight:700; }
+.target-wrap { overflow:auto; max-height:70vh; border-radius:12px; background:#000; touch-action: pan-x pan-y; }
+.target-canvas { position:relative; touch-action:none; user-select:none; }
+.target-canvas img { display:block; width:100%; height:auto; pointer-events:none; }
+.overlay { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.hole { fill: rgba(245,165,36,.18); stroke:#f5a524; stroke-width:2; } .hole.sel { stroke:#58a6ff; fill: rgba(88,166,255,.25); stroke-width:3; }
+.hole-c { fill:#f5a524; } .hole-n { fill:#fff; font-size:12px; font-weight:700; paint-order:stroke; stroke:#000; stroke-width:3px; }
+.scale-line { stroke:#3fb950; stroke-width:2; stroke-dasharray:6 4; } .scale-pt { fill:rgba(63,185,80,.3); stroke:#3fb950; stroke-width:2; }
+.spread-line { stroke:#f85149; stroke-width:1.5; stroke-dasharray:4 3; }
+.btn:disabled, .seg button:disabled { opacity:.4; }

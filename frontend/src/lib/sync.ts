@@ -38,6 +38,16 @@ export async function syncNow() {
         }
       });
     }
+    // 1b. upload target photos saved on the phone (private bucket, per-user folder)
+    const uid = data.session!.user.id;
+    for (const ph of await db.photos.where('uploaded').equals(0).toArray()) {
+      const path = `${uid}/targets/${ph.id}.jpg`;
+      const up = await supabase.storage.from('range-files').upload(path, ph.blob, { upsert: true, contentType: ph.blob.type || 'image/jpeg' });
+      if (up.error) throw new Error(`Photo upload: ${up.error.message}`);
+      await db.photos.update(ph.id, { uploaded: 1 });
+      const fs = await db.firing_strings.get(ph.id);
+      if (fs && fs.target_photo_path !== path) await db.firing_strings.update(ph.id, { target_photo_path: path, updated_at: new Date().toISOString(), _dirty: 1 });
+    }
     // 2. pull remote changes (from other devices)
     const since = (await db.meta.get('lastPull'))?.value || '1970-01-01T00:00:00Z';
     const r = await fetch(`${API_URL}/api/sync/pull?since=${encodeURIComponent(since)}`, { headers });

@@ -13,6 +13,7 @@ import SessionScreen from './screens/Session';
 import StringDetail from './screens/StringDetail';
 import Analytics from './screens/Analytics';
 import Admin from './screens/Admin';
+import TargetMarker from './screens/TargetMarker';
 
 function SyncBadge() {
   const [s, setS] = useState<SyncState>({ status: 'idle', pending: 0 });
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/strings/:id" element={<StringDetail />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/strings/:id/target" element={<TargetMarker />} />
         </Routes>
       </main>
       <nav className="tabs">

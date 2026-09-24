@@ -6,7 +6,6 @@ import { RecordForm } from '../lib/form';
 import { useLoadOptions } from '../lib/lookups';
 import { velocityStats, fmt, moa } from '../lib/stats';
 import { parseChronoCsv, DEVICE_LABELS, type ChronoDevice } from '../lib/chrono';
-import { supabase } from '../lib/supabase';
 
 export default function StringDetail() {
   const { id } = useParams();
@@ -37,15 +36,6 @@ export default function StringDetail() {
       for (const s of r.shots) await save('shots', { firing_string_id: f.id, shot_number: n++, muzzle_velocity_fps: s.muzzle_velocity_fps, is_excluded: false, source: `${r.device}_csv` as any });
       setMsg(`Imported ${r.shots.length} shots from ${DEVICE_LABELS[r.device]}${r.series ? ` series ${r.series}` : ''}${r.units === 'mps' ? ' (converted from m/s)' : ''}.`);
     } catch (e) { setMsg((e as Error).message); }
-  };
-  const uploadPhoto = async (file: File) => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user || !navigator.onLine) return setMsg('Target photo upload needs a connection for now. Record group size and try the photo later.');
-    const path = `${data.user.id}/targets/${f.id}-${Date.now()}.${file.name.split('.').pop() || 'jpg'}`;
-    const { error } = await supabase.storage.from('range-files').upload(path, file);
-    if (error) return setMsg(error.message);
-    await save('firing_strings', { ...f, target_photo_path: path });
-    setMsg('Target photo uploaded.');
   };
 
   return (
@@ -83,8 +73,8 @@ export default function StringDetail() {
         { name: 'horizontal_spread_inches', label: 'Horizontal (in)', type: 'number' },
         { name: 'notes', label: 'Notes', type: 'textarea' },
       ]} />
-      <p className="muted">Group: {fmt(moa(f.group_size_inches, f.target_distance_yards), 2)} MOA {f.target_photo_path && '· photo attached'}</p>
-      <label className="btn">Attach target photo<input hidden type="file" accept="image/*" capture="environment" onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])} /></label>
+      <p className="muted">Group: {fmt(moa(f.group_size_inches, f.target_distance_yards), 2)} MOA {f.target_analysis && '· measured from photo'}</p>
+      <Link className="btn primary" to={`/strings/${f.id}/target`}>{f.target_analysis ? `Edit target measurement (${f.target_analysis.holes.length} holes)` : "Measure group from target photo"}</Link>
 
       <h3>Conditions</h3>
       {env.map((w) => <div key={w.id} className="card muted">{new Date(w.captured_at).toLocaleTimeString()} · {w.temperature_f ?? '—'}°F · {w.relative_humidity_percent ?? '—'}% RH · {w.station_pressure_inhg ?? '—'} inHg · DA {w.density_altitude_ft ?? '—'} · wind {w.wind_speed_mph ?? '—'} mph @ {w.wind_direction_degrees ?? '—'}° <button className="btn small" onClick={() => remove('environmental_snapshots', w.id)}>✕</button></div>)}
