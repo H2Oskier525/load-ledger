@@ -5,6 +5,8 @@ type Req = { id: string; email: string; full_name?: string; reason?: string; sta
 export default function Admin() {
   const [rows, setRows] = useState<Req[]>([]);
   const [err, setErr] = useState('');
+  const [ok, setOk] = useState<boolean | null>(null);
+  useEffect(() => { supabase.auth.getUser().then(({ data }) => setOk(data.user?.email?.toLowerCase() === 'justin@thesells.net')); }, []);
   const load = async () => { const { data, error } = await supabase.from('access_requests').select('*').order('created_at', { ascending: false }); if (error) setErr(error.message); else setRows(data as Req[]); };
   useEffect(() => { load(); }, []);
   const decide = async (r: Req, status: Req['status']) => {
@@ -13,6 +15,7 @@ export default function Admin() {
     load();
   };
   const invite = (r: Req) => `mailto:${r.email}?subject=${encodeURIComponent('Your Load Ledger access is approved')}&body=${encodeURIComponent(`Hi ${r.full_name || ''},\n\nYour Load Ledger access is approved. Go to ${window.location.origin}, choose "Create account", and sign up with this email address.\n\nJustin`)}`;
+  if (ok === false) return <p className="muted">This screen is only available to the app owner.</p>;
   return (
     <div className="stack">
       <h2>Access requests</h2>

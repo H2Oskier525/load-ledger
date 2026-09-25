@@ -4,6 +4,8 @@ import { db, alive } from '../data/db';
 import { useStartSession } from './Shoot';
 import { lotAlert } from './Brass';
 import { componentLabel } from '../ui/ComponentPicker';
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 export default function Home() {
   const start = useStartSession();
@@ -16,9 +18,12 @@ export default function Home() {
   const alerts = lots.map((l) => { const c = comps.find((x) => x.id === l.component_id); const a = lotAlert(l, c?.type); return a && { l, c, a }; }).filter(Boolean) as { l: any; c: any; a: string }[];
   const untested = loads.filter((l) => !strings.some((f) => f.load_recipe_id === l.id));
   const last = sessions[0];
+  const [pending, setPending] = useState<number | null>(null);
+  useEffect(() => { supabase.auth.getUser().then(async ({ data }) => { if (data.user?.email?.toLowerCase() !== 'justin@thesells.net') return; const { count } = await supabase.from('access_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'); setPending(count ?? 0); }); }, []);
   return (
     <div className="stack">
       <button className="btn primary big" onClick={start}>Start range session</button>
+      {pending !== null && <Link className={`card row ${pending ? 'leader' : ''}`} to="/admin"><b>Access requests</b><span className={`pill ${pending ? 'warn' : 'ok'}`}>{pending} pending</span></Link>}
       {!rifles.length && <Link className="card" to="/rifles"><b>Add your first rifle</b><div className="muted">Loads are matched to rifles by cartridge.</div></Link>}
       {last && <Link className="card" to={`/sessions/${last.id}`}><span className="muted small">Review last session</span><div><b>{last.range_name || 'Range session'}</b> · {last.session_date} · {strings.filter((f) => f.range_session_id === last.id).length} strings</div></Link>}
       {untested.length > 0 && <Link className="card" to="/loads"><span className="muted small">Ready to test</span><div><b>{untested.length} load{untested.length > 1 ? 's' : ''}</b> not shot yet{untested[0] ? ` · e.g. ${untested[0].name}` : ''}</div></Link>}

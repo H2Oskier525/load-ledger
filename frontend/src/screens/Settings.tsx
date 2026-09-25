@@ -52,6 +52,7 @@ export default function Settings() {
   return (
     <div className="stack settings">
       <h2>Settings</h2>
+      {isAdmin && <Link className="btn primary" to="/admin">Approve access requests</Link>}
 
       <section className="card"><h3>Display</h3>
         <Opt k="theme" label="Theme" options={[['dark', 'Dark'], ['light', 'Light'], ['sun', 'Bright sun'], ['system', 'Auto']]} />
