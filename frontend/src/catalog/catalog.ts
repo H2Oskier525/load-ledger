@@ -1,6 +1,6 @@
 // Starter reference library: product names and physical specs only (no load data).
 // Users pick from here, or quick-add their own item and link it later.
-export interface Cartridge { name: string; bullet_dia: number; aliases?: string[] }
+export interface Cartridge { name: string; bullet_dia?: number; aliases?: string[] }
 export const CARTRIDGES: Cartridge[] = [
   { name: '.17 HMR', bullet_dia: 0.172 }, { name: '.22 LR', bullet_dia: 0.223 }, { name: '.22 WMR', bullet_dia: 0.224 },
   { name: '.204 Ruger', bullet_dia: 0.204 }, { name: '.223 Remington', bullet_dia: 0.224, aliases: ['223', '.223 rem', '5.56', '5.56 nato', '223 wylde'] },
@@ -98,4 +98,6 @@ export function searchCatalog(type: CatalogType, q: string, opts?: { diameter?: 
   const words = q.toLowerCase().split(/\s+/).filter(Boolean);
   return CATALOG.filter((i) => i.type === type && (!opts?.diameter || !i.bullet_diameter_inches || Math.abs(i.bullet_diameter_inches - opts.diameter) < 0.0015) && words.every((w) => `${i.manufacturer} ${i.product_name} ${i.caliber_or_size || ''} ${i.bullet_type || ''}`.toLowerCase().includes(w))).slice(0, 40);
 }
-export const cartridgeDiameter = (c?: string) => CARTRIDGES.find((x) => x.name === canonicalCartridge(c))?.bullet_dia;
+let CUSTOM: Cartridge[] = [];
+export const setCustomCartridges = (c: Cartridge[]) => { CUSTOM = c; };
+export const cartridgeDiameter = (c?: string) => [...CARTRIDGES, ...CUSTOM].find((x) => x.name === canonicalCartridge(c))?.bullet_dia;

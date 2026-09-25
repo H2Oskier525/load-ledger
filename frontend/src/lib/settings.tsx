@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { db } from '../data/db';
 import { supabase } from './supabase';
+import { setCustomCartridges } from '../catalog/catalog';
 
 export interface Settings {
   theme: 'dark' | 'light' | 'system' | 'sun';
@@ -12,13 +13,29 @@ export interface Settings {
   defaultShotsPerString: number;
   keepScreenAwake: boolean;
   confirmDeletes: boolean;
+  detailLevel: Level;
+  detailBuild: Level | 'default';
+  detailShoot: Level | 'default';
+  detailAnalyze: Level | 'default';
+  libraryMode: 'on' | 'mine' | 'hidden';
+  customCartridges: { name: string; bullet_dia?: number }[];
 }
-export const DEFAULTS: Settings = { theme: 'dark', textSize: 'normal', density: 'comfortable', velocityUnit: 'fps', groupUnit: 'moa', defaultDistanceYards: 100, defaultShotsPerString: 5, keepScreenAwake: true, confirmDeletes: true };
+export type Level = 'essential' | 'expanded' | 'full';
+const RANK: Record<Level, number> = { essential: 0, expanded: 1, full: 2 };
+/** Detail level for a screen, honoring per-screen overrides. */
+export function useDetail(screen: 'build' | 'shoot' | 'analyze') {
+  const { s } = useSettings();
+  const o = s[screen === 'build' ? 'detailBuild' : screen === 'shoot' ? 'detailShoot' : 'detailAnalyze'];
+  const level: Level = o === 'default' ? s.detailLevel : o;
+  return { level, at: (min: Level) => RANK[level] >= RANK[min] };
+}
+export const DEFAULTS: Settings = { theme: 'dark', textSize: 'normal', density: 'comfortable', velocityUnit: 'fps', groupUnit: 'moa', defaultDistanceYards: 100, defaultShotsPerString: 5, keepScreenAwake: true, confirmDeletes: true, detailLevel: 'essential', detailBuild: 'default', detailShoot: 'default', detailAnalyze: 'default', libraryMode: 'on', customCartridges: [] };
 
 const Ctx = createContext<{ s: Settings; set: (p: Partial<Settings>) => void }>({ s: DEFAULTS, set: () => {} });
 export const useSettings = () => useContext(Ctx);
 
 function apply(s: Settings) {
+  setCustomCartridges(s.customCartridges || []);
   const r = document.documentElement;
   const dark = s.theme === 'system' ? matchMedia('(prefers-color-scheme: dark)').matches : s.theme === 'dark';
   r.dataset.theme = s.theme === 'sun' ? 'sun' : dark ? 'dark' : 'light';

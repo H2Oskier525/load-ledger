@@ -1,3 +1,4 @@
+import { BuildNav } from './Build';
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, alive, save, remove, type Component } from '../data/db';
@@ -39,6 +40,7 @@ export default function Components() {
   const list = comps.filter((c) => c.type === tab);
   return (
     <div className="stack">
+      <BuildNav />
       <h2>Components</h2>
       <div className="seg">{TYPES.map(({ t, label }) => <button key={t} className={tab === t ? 'on' : ''} onClick={() => { setTab(t); setAdding(false); }}>{label}</button>)}</div>
       {adding ? (

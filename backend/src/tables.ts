@@ -8,6 +8,7 @@ export const SYNC_TABLES = [
   'firing_strings',
   'shots',
   'environmental_snapshots',
+  'library_notes',
 ] as const;
 export type SyncTable = (typeof SYNC_TABLES)[number];
 export const isSyncTable = (t: string): t is SyncTable => (SYNC_TABLES as readonly string[]).includes(t);

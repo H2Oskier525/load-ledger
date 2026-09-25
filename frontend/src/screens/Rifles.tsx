@@ -1,3 +1,4 @@
+import { BuildNav } from './Build';
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, alive, save, remove, type Rifle } from '../data/db';
@@ -24,6 +25,7 @@ export default function Rifles() {
   );
   return (
     <div className="stack">
+      <BuildNav />
       <div className="row"><h2>Rifles</h2><button className="btn primary" onClick={() => setEdit({})}>Add rifle</button></div>
       {rows.map((r) => (
         <div key={r.id} className="card">

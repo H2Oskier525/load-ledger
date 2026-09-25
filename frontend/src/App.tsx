@@ -15,8 +15,10 @@ import Analytics from './screens/Analytics';
 import Admin from './screens/Admin';
 import TargetMarker from './screens/TargetMarker';
 import SettingsScreen from './screens/Settings';
+import Library from './screens/Library';
+import Shoot from './screens/Shoot';
+import Brass from './screens/Brass';
 import { SettingsProvider } from './lib/settings';
-import { CARTRIDGES } from './catalog/catalog';
 
 function SyncBadge() {
   const [s, setS] = useState<SyncState>({ status: 'idle', pending: 0 });
@@ -44,7 +46,7 @@ export default function App() {
   return (
     <SettingsProvider>
     <BrowserRouter>
-      <header className="top"><NavLink to="/" className="brand">Load Ledger</NavLink><SyncBadge /></header>
+      <header className="top"><NavLink to="/" className="brand">Load Ledger</NavLink><span><SyncBadge /><NavLink to="/settings" className="gear" aria-label="Settings">⚙</NavLink></span></header>
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -57,12 +59,14 @@ export default function App() {
           <Route path="/admin" element={<Admin />} />
           <Route path="/strings/:id/target" element={<TargetMarker />} />
           <Route path="/settings" element={<SettingsScreen />} />
+          <Route path="/library" element={<Library />} />
+          <Route path="/shoot" element={<Shoot />} />
+          <Route path="/brass" element={<Brass />} />
         </Routes>
       </main>
       <nav className="tabs">
-        <NavLink to="/" end>Home</NavLink><NavLink to="/loads">Loads</NavLink><NavLink to="/analytics">Charts</NavLink><NavLink to="/settings">Settings</NavLink>
+        <NavLink to="/" end>Home</NavLink><NavLink to="/loads" className={({ isActive }) => (isActive || /^\/(components|brass|rifles)/.test(location.pathname) ? 'active' : '')}>Build</NavLink><NavLink to="/shoot" className={({ isActive }) => (isActive || /^\/(sessions|strings)/.test(location.pathname) ? 'active' : '')}>Shoot</NavLink><NavLink to="/analytics">Analyze</NavLink><NavLink to="/library">Library</NavLink>
       </nav>
-      <datalist id="cartridge-list">{CARTRIDGES.map((c) => <option key={c.name} value={c.name} />)}</datalist>
     </BrowserRouter>
     </SettingsProvider>
   );

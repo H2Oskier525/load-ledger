@@ -45,7 +45,7 @@ export default function Settings() {
   };
   const backup = async () => {
     const out: Record<string, unknown[]> = {};
-    for (const t of ['rifles', 'components', 'component_lots', 'load_recipes', 'range_sessions', 'firing_strings', 'shots', 'environmental_snapshots']) out[t] = await db.table(t).toArray();
+    for (const t of ['rifles', 'components', 'component_lots', 'load_recipes', 'range_sessions', 'firing_strings', 'shots', 'environmental_snapshots', 'library_notes']) out[t] = await db.table(t).toArray();
     download(`load-ledger-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(out, null, 1), 'application/json');
   };
 
@@ -57,6 +57,17 @@ export default function Settings() {
         <Opt k="theme" label="Theme" options={[['dark', 'Dark'], ['light', 'Light'], ['sun', 'Bright sun'], ['system', 'Auto']]} />
         <Opt k="textSize" label="Text size" options={[['normal', 'Normal'], ['large', 'Large']]} />
         <Opt k="density" label="Layout" options={[['comfortable', 'Comfortable'], ['compact', 'Compact']]} />
+      </section>
+
+      <section className="card"><h3>Views</h3>
+        <p className="muted small">Essential shows only what you need. Expanded adds lots, conditions, chronograph import and trends. Full shows every field, extra filters and exports. Each screen also has its own switch at the top.</p>
+        <Opt k="detailLevel" label="Default for all screens" options={[['essential', 'Essential'], ['expanded', 'Expanded'], ['full', 'Full']]} />
+        <Opt k="detailBuild" label="Build (loads)" options={[['default', 'Default'], ['essential', 'Ess.'], ['expanded', 'Exp.'], ['full', 'Full']]} />
+        <Opt k="detailShoot" label="Shoot (range)" options={[['default', 'Default'], ['essential', 'Ess.'], ['expanded', 'Exp.'], ['full', 'Full']]} />
+        <Opt k="detailAnalyze" label="Analyze" options={[['default', 'Default'], ['essential', 'Ess.'], ['expanded', 'Exp.'], ['full', 'Full']]} />
+        <Opt k="libraryMode" label="Reference library" options={[['on', 'On'], ['mine', 'My data only'], ['hidden', 'Hidden']]} />
+        <p className="muted small">My data only: component pickers show only your own items and quick add. Hidden: also hides reference sections in the Library tab (your notes stay).</p>
+        <button className="btn small" onClick={() => set({ detailLevel: 'essential', detailBuild: 'default', detailShoot: 'default', detailAnalyze: 'default', libraryMode: 'on' })}>Reset views</button>
       </section>
 
       <section className="card"><h3>Units</h3>
@@ -72,7 +83,7 @@ export default function Settings() {
       </section>
 
       <section className="card"><h3>My data</h3>
-        <div className="grid2"><Link className="btn" to="/rifles">Rifles ({counts?.rifles ?? 0})</Link><Link className="btn" to="/components">Components</Link><Link className="btn" to="/loads">Loads ({counts?.loads ?? 0})</Link><Link className="btn" to="/analytics">Charts</Link></div>
+        <div className="grid2"><Link className="btn" to="/rifles">Rifles ({counts?.rifles ?? 0})</Link><Link className="btn" to="/components">Components</Link><Link className="btn" to="/loads">Loads ({counts?.loads ?? 0})</Link><Link className="btn" to="/brass">Brass & stock</Link></div>
         <p className="muted small">On this phone: {counts?.sessions ?? 0} sessions · {counts?.strings ?? 0} strings · {counts?.shots ?? 0} shots · {counts?.photos ?? 0} target photos</p>
         <div className="chips"><button className="btn small" onClick={exportStrings}>Export strings (CSV)</button><button className="btn small" onClick={backup}>Full backup (JSON)</button></div>
       </section>
