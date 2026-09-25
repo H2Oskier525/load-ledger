@@ -18,7 +18,7 @@ export default function StringDetail() {
   const { cartridge, options: loads } = useLoadOptions(sess?.rifle_id);
   const { s: st8 } = useSettings();
   useWakeLock(st8.keepScreenAwake);
-  const { at } = useDetail('shoot');
+  const { show } = useDetail('shoot');
   const [velIn, setVel] = useState('');
   const [msg, setMsg] = useState('');
   const [device, setDevice] = useState<ChronoDevice | ''>('');
@@ -61,15 +61,15 @@ export default function StringDetail() {
         {shots.map((s) => (
           <div key={s.id} className={`shot ${s.is_excluded ? 'excluded' : ''}`}>
             <span>#{s.shot_number}</span><b>{vel(s.muzzle_velocity_fps, st8, st8.velocityUnit === 'mps' ? 1 : 0)}</b>
-            <button className="btn small" onClick={() => { if (s.is_excluded) return save('shots', { ...s, is_excluded: false, exclusion_reason: undefined }); const r = at('full') ? prompt('Reason (chrono error, called flyer, fouler…)', 'Called flyer') : undefined; if (r === null) return; save('shots', { ...s, is_excluded: true, exclusion_reason: r || undefined }); }}>{s.is_excluded ? 'Include' : 'Exclude'}</button>
-            {at('full') && <button className="btn small" onClick={() => { const n = prompt('Shot note (primer look, extraction, ejector mark…)', s.notes || ''); if (n !== null) save('shots', { ...s, notes: n || undefined }); }}>{s.notes ? 'Note ✓' : 'Note'}</button>}
-            {at('full') && (s.exclusion_reason || s.notes) && <small className="muted shotnote">{[s.exclusion_reason, s.notes].filter(Boolean).join(' · ')}</small>}
+            <button className="btn small" onClick={() => { if (s.is_excluded) return save('shots', { ...s, is_excluded: false, exclusion_reason: undefined }); const r = show('exclusion_reason') ? prompt('Reason (chrono error, called flyer, fouler…)', 'Called flyer') : undefined; if (r === null) return; save('shots', { ...s, is_excluded: true, exclusion_reason: r || undefined }); }}>{s.is_excluded ? 'Include' : 'Exclude'}</button>
+            {show('shot_notes') && <button className="btn small" onClick={() => { const n = prompt('Shot note (primer look, extraction, ejector mark…)', s.notes || ''); if (n !== null) save('shots', { ...s, notes: n || undefined }); }}>{s.notes ? 'Note ✓' : 'Note'}</button>}
+            {(show('shot_notes') || show('exclusion_reason')) && (s.exclusion_reason || s.notes) && <small className="muted shotnote">{[s.exclusion_reason, s.notes].filter(Boolean).join(' · ')}</small>}
             <button className="btn small" onClick={() => remove('shots', s.id)}>✕</button>
           </div>
         ))}
       </div>
 
-      {at('expanded') && <><div className="grid2"><select value={device} onChange={(e) => setDevice(e.target.value as ChronoDevice | '')}><option value="">Auto-detect chronograph</option>{Object.entries(DEVICE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+      {show('chrono_import') && <><div className="grid2"><select value={device} onChange={(e) => setDevice(e.target.value as ChronoDevice | '')}><option value="">Auto-detect chronograph</option>{Object.entries(DEVICE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
       <label className="btn">Import chronograph CSV<input hidden type="file" accept=".csv,text/csv" onChange={(e) => e.target.files?.[0] && importCsv(e.target.files[0])} /></label></div>
       {msg && <p className="notice">{msg}</p>}</>}
 
@@ -82,22 +82,20 @@ export default function StringDetail() {
         { name: 'notes', label: 'Notes', type: 'textarea' },
       ]} />
       <p className="muted">Group: {group(f.group_size_inches, f.target_distance_yards, st8)}{f.target_analysis && ` · measured from photo · height ${fmt(f.vertical_spread_inches, 2)}" × width ${fmt(f.horizontal_spread_inches, 2)}"`}</p>
-      <Link className="btn primary" to={`/strings/${f.id}/target`}>{f.target_analysis ? `Edit target measurement (${f.target_analysis.holes.length} holes)` : "Measure group from target photo"}</Link>
+      {show('target_photo') && <Link className="btn primary" to={`/strings/${f.id}/target`}>{f.target_analysis ? `Edit target measurement (${f.target_analysis.holes.length} holes)` : "Measure group from target photo"}</Link>}
 
-      {at('expanded') && <>
+      {show('conditions') && <>
       <h3>Conditions</h3>
       {env.map((w) => <div key={w.id} className="card muted">{new Date(w.captured_at).toLocaleTimeString()} · {w.temperature_f ?? '—'}°F · {w.relative_humidity_percent ?? '—'}% RH · {w.station_pressure_inhg ?? '—'} inHg · DA {w.density_altitude_ft ?? '—'} · wind {w.wind_speed_mph ?? '—'} mph @ {w.wind_direction_degrees ?? '—'}° <button className="btn small" onClick={() => remove('environmental_snapshots', w.id)}>✕</button></div>)}
       <RecordForm<EnvSnapshot> key={`env-${env.length}`} submitLabel="Record conditions" onSubmit={(v) => save('environmental_snapshots', { ...v, firing_string_id: f.id, captured_at: new Date().toISOString(), source: 'manual' }).then(() => undefined)} fields={[
-        { name: 'temperature_f', label: 'Temp (°F)', type: 'number' },
-        { name: 'relative_humidity_percent', label: 'Humidity (%)', type: 'number' },
-        { name: 'wind_speed_mph', label: 'Wind (mph)', type: 'number' },
-        ...(at('full') ? [
-          { name: 'station_pressure_inhg', label: 'Station pressure (inHg)', type: 'number' as const },
-          { name: 'density_altitude_ft', label: 'Density altitude (ft)', type: 'number' as const },
-          { name: 'wind_direction_degrees', label: 'Wind direction (°)', type: 'number' as const },
-          { name: 'notes', label: 'Conditions notes', type: 'textarea' as const },
-        ] : []),
-      ]} /></>}
+        { name: 'temperature_f', label: 'Temp (°F)', type: 'number' as const },
+        { name: 'relative_humidity_percent', label: 'Humidity (%)', type: 'number' as const },
+        { name: 'wind_speed_mph', label: 'Wind (mph)', type: 'number' as const },
+        { name: 'station_pressure_inhg', label: 'Station pressure (inHg)', type: 'number' as const },
+        { name: 'density_altitude_ft', label: 'Density altitude (ft)', type: 'number' as const },
+        { name: 'wind_direction_degrees', label: 'Wind direction (°)', type: 'number' as const },
+        { name: 'notes', label: 'Conditions notes', type: 'textarea' as const },
+      ].filter((x) => show(x.name === 'notes' ? 'env_notes' : x.name))} /></>}
     </div>
   );
 }

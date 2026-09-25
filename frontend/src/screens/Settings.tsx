@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { FieldManager } from '../ui/FieldManager';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useSettings, type Settings as S } from '../lib/settings';
@@ -62,13 +63,18 @@ export default function Settings() {
 
       <section className="card"><h3>Views</h3>
         <p className="muted small">Essential shows only what you need. Expanded adds lots, conditions, chronograph import and trends. Full shows every field, extra filters and exports. Each screen also has its own switch at the top.</p>
-        <Opt k="detailLevel" label="Default for all screens" options={[['essential', 'Essential'], ['expanded', 'Expanded'], ['full', 'Full']]} />
+        <div className="field"><span>All screens</span><div className="seg small">{([['essential', 'Essential'], ['expanded', 'Expanded'], ['full', 'Full']] as const).map(([v, l]) => (
+          <button type="button" key={v} className={s.detailLevel === v && s.detailBuild === 'default' && s.detailShoot === 'default' && s.detailAnalyze === 'default' ? 'on' : ''} onClick={() => set({ detailLevel: v, detailBuild: 'default', detailShoot: 'default', detailAnalyze: 'default' })}>{l}</button>))}</div>
+          <small className="muted">Sets every screen at once (clears the per-screen choices below).</small></div>
         <Opt k="detailBuild" label="Build (loads)" options={[['default', 'Default'], ['essential', 'Ess.'], ['expanded', 'Exp.'], ['full', 'Full']]} />
         <Opt k="detailShoot" label="Shoot (range)" options={[['default', 'Default'], ['essential', 'Ess.'], ['expanded', 'Exp.'], ['full', 'Full']]} />
         <Opt k="detailAnalyze" label="Analyze" options={[['default', 'Default'], ['essential', 'Ess.'], ['expanded', 'Exp.'], ['full', 'Full']]} />
         <Opt k="libraryMode" label="Reference library" options={[['on', 'On'], ['mine', 'My data only'], ['hidden', 'Hidden']]} />
         <p className="muted small">My data only: component pickers show only your own items and quick add. Hidden: also hides reference sections in the Library tab (your notes stay).</p>
-        <button className="btn small" onClick={() => set({ detailLevel: 'essential', detailBuild: 'default', detailShoot: 'default', detailAnalyze: 'default', libraryMode: 'on' })}>Reset views</button>
+        <h4>Fields shown</h4>
+        <p className="muted small">Switch any field or section on or off. Applies on top of the view level.</p>
+        <FieldManager />
+        <button className="btn small" onClick={() => set({ hiddenFields: [], detailLevel: 'essential', detailBuild: 'default', detailShoot: 'default', detailAnalyze: 'default', libraryMode: 'on' })}>Reset views</button>
       </section>
 
       <section className="card"><h3>Units</h3>

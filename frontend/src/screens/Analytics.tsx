@@ -20,7 +20,7 @@ export default function Analytics() {
   const sessions = alive(useLiveQuery(() => db.range_sessions.toArray()));
   const comps = alive(useLiveQuery(() => db.components.toArray()));
   const { s } = useSettings();
-  const { at } = useDetail('analyze');
+  const { at, show } = useDetail('analyze');
   const [rifle, setRifle] = useState(''); const [cart, setCart] = useState('');
   const [f2, setF2] = useState({ powder: '', bullet: '', brass: '', min: '', max: '', dist: '' });
   const [y, setY] = useState<keyof typeof METRICS>('sd');
@@ -70,7 +70,7 @@ export default function Analytics() {
         <select value={rifle} onChange={(e) => setRifle(e.target.value)}><option value="">All rifles</option>{rifles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>
         <select value={cart} onChange={(e) => setCart(e.target.value)}><option value="">All cartridges</option>{carts.map((c) => <option key={c}>{c}</option>)}</select>
       </div>
-      {at('full') && (
+      {show('filters') && (
         <details className="card" open><summary>More filters</summary>
           <div className="grid2">
             <select value={f2.powder} onChange={(e) => setF2({ ...f2, powder: e.target.value })}><option value="">Any powder</option>{powders.map((c) => <option key={c.id} value={c.id}>{componentLabel(c)}</option>)}</select>
@@ -83,7 +83,7 @@ export default function Analytics() {
         </details>
       )}
 
-      <section>
+      {show('leaderboard') && <section>
         <div className="row"><h3>Which load performed best?</h3>
           <div className="seg small"><button className={rank === 'sd' ? 'on' : ''} onClick={() => setRank('sd')}>Lowest SD</button><button className={rank === 'group' ? 'on' : ''} onClick={() => setRank('group')}>Smallest group</button></div></div>
         {!leaders.length && <p className="muted">Record strings with a load selected to compare loads.</p>}
@@ -92,10 +92,10 @@ export default function Analytics() {
             <div className="row"><b>{i === 0 ? 'Current leader · ' : `${i + 1}. `}{l.load.name}</b><span className={`pill ${cls}`}>{c}</span></div>
             <div className="stats"><span>{l.n} shots / {l.strings} strings</span><span>Avg {vel(l.avg, s)} {velLabel(s)}</span><span>SD {velSd(l.sd, s)}</span><span>ES {vel(l.es, s)}</span><span>{s.groupUnit === 'in' ? group(l.groupIn, l.dist, s) : s.groupUnit === 'mil' ? `${l.groupMoa !== undefined ? (l.groupMoa * 0.2909).toFixed(2) : '—'} mil` : `${l.groupMoa?.toFixed(2) ?? '—'} MOA`} avg</span></div>
           </div>); })}
-      </section>
+      </section>}
 
-      {at('expanded') && <>
-        <h3>Trends</h3>
+      {(show('trends') || show('table')) && <>
+        {show('trends') && <><h3>Trends</h3>
         <div className="grid2">
           <select value={y} onChange={(e) => setY(e.target.value as any)}>{Object.entries(METRICS).map(([k, v]) => <option key={k} value={k}>{v} ({k === 'moa' ? s.groupUnit.toUpperCase() : velLabel(s)})</option>)}</select>
           <select value={x} onChange={(e) => setX(e.target.value as any)}>{Object.entries(XS).map(([k, v]) => <option key={k} value={k}>vs {v}</option>)}</select>
@@ -112,13 +112,13 @@ export default function Analytics() {
               </ScatterChart>
             </ResponsiveContainer>
           ) : <p className="muted">Not enough data for this chart yet.</p>}
-        </div>
-        <table className="table">
-          <thead><tr><th>Load</th><th>n</th><th>Avg</th><th>SD</th><th>ES</th><th>Group</th></tr></thead>
-          <tbody>{rows.map((r) => <tr key={r.f.id}><td>{r.load?.name}{at('full') && <small className="muted"><br />{r.f.label}</small>}</td><td>{r.n}</td><td>{vel(r.avgRaw, s)}</td><td>{velSd(r.sdRaw, s)}</td><td>{vel(r.esRaw, s)}</td><td>{group(r.f.group_size_inches, r.f.target_distance_yards, s)}</td></tr>)}</tbody>
-        </table>
+        </div></>}
+        {show('table') && <table className="table">
+          <thead><tr><th>Load</th><th>n</th>{show('col_avg') && <th>Avg</th>}{show('col_sd') && <th>SD</th>}{show('col_es') && <th>ES</th>}{show('col_group') && <th>Group</th>}</tr></thead>
+          <tbody>{rows.map((r) => <tr key={r.f.id}><td>{r.load?.name}{at('full') && <small className="muted"><br />{r.f.label}</small>}</td><td>{r.n}</td>{show('col_avg') && <td>{vel(r.avgRaw, s)}</td>}{show('col_sd') && <td>{velSd(r.sdRaw, s)}</td>}{show('col_es') && <td>{vel(r.esRaw, s)}</td>}{show('col_group') && <td>{group(r.f.group_size_inches, r.f.target_distance_yards, s)}</td>}</tr>)}</tbody>
+        </table>}
       </>}
-      {at('full') && <button className="btn small" onClick={exportCsv}>Export this view (CSV)</button>}
+      {show('export') && <button className="btn small" onClick={exportCsv}>Export this view (CSV)</button>}
       <p className="muted small">Patterns in your own recorded data only. Not load advice.</p>
     </div>
   );

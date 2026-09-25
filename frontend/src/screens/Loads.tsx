@@ -38,23 +38,23 @@ function LoadForm({ initial, onDone }: { initial: Partial<LoadRecipe>; onDone: (
   const [v, setV] = useState<Partial<LoadRecipe>>(initial);
   const set = (p: Partial<LoadRecipe>) => setV((x) => ({ ...x, ...p }));
   const dia = cartridgeDiameter(v.cartridge);
-  const { at } = useDetail('build');
-  const lots = at('expanded');
+  const { show } = useDetail('build');
+  const lots = show('lots');
   return (
     <form className="form" onSubmit={async (e) => { e.preventDefault(); await save('load_recipes', { ...v, cartridge: canonicalCartridge(v.cartridge) }); onDone(); }}>
       <div className="row"><h2>{v.id ? 'Edit load' : 'New load'}</h2></div><ViewSwitch screen="build" />
       <p className="notice small">Recordkeeping only. Always follow published component-manufacturer load data.</p>
       <label className="field"><span>Load name *</span><input required value={v.name || ''} placeholder="e.g. H4350 ladder step 3" onChange={(e) => set({ name: e.target.value })} /></label>
       <label className="field"><span>Cartridge * (matches rifles with this cartridge)</span><CartridgeInput required value={v.cartridge} onChange={(c) => set({ cartridge: c })} /></label>
-      <ComponentField showLot={lots} type="bullet" diameter={dia} value={v.bullet_id} lotValue={v.bullet_lot_id} onChange={(c, l) => set({ bullet_id: c, bullet_lot_id: l })} />
-      <ComponentField showLot={lots} type="powder" value={v.powder_id} lotValue={v.powder_lot_id} onChange={(c, l) => set({ powder_id: c, powder_lot_id: l })} />
-      <ComponentField showLot={lots} type="primer" value={v.primer_id} lotValue={v.primer_lot_id} onChange={(c, l) => set({ primer_id: c, primer_lot_id: l })} />
-      <ComponentField showLot={lots} type="case" cartridge={canonicalCartridge(v.cartridge)} value={v.case_id} lotValue={v.case_lot_id} onChange={(c, l) => set({ case_id: c, case_lot_id: l })} />
+      {show('bullet') && <ComponentField showLot={lots} type="bullet" diameter={dia} value={v.bullet_id} lotValue={v.bullet_lot_id} onChange={(c, l) => set({ bullet_id: c, bullet_lot_id: l })} />}
+      {show('powder') && <ComponentField showLot={lots} type="powder" value={v.powder_id} lotValue={v.powder_lot_id} onChange={(c, l) => set({ powder_id: c, powder_lot_id: l })} />}
+      {show('primer') && <ComponentField showLot={lots} type="primer" value={v.primer_id} lotValue={v.primer_lot_id} onChange={(c, l) => set({ primer_id: c, primer_lot_id: l })} />}
+      {show('case') && <ComponentField showLot={lots} type="case" cartridge={canonicalCartridge(v.cartridge)} value={v.case_id} lotValue={v.case_lot_id} onChange={(c, l) => set({ case_id: c, case_lot_id: l })} />}
       <div className="grid2">
-        {NUMS.filter(([, , l]) => at(l)).map(([k, label]) => <label key={k} className="field"><span>{label}</span><input type="number" inputMode="decimal" step="any" value={(v[k] as number | undefined) ?? ''} onChange={(e) => set({ [k]: e.target.value === '' ? undefined : Number(e.target.value) } as any)} /></label>)}
+        {NUMS.filter(([k]) => show(k as string)).map(([k, label]) => <label key={k} className="field"><span>{label}</span><input type="number" inputMode="decimal" step="any" value={(v[k] as number | undefined) ?? ''} onChange={(e) => set({ [k]: e.target.value === '' ? undefined : Number(e.target.value) } as any)} /></label>)}
       </div>
-      {at('expanded') && <label className="field"><span>Intended use</span><select value={v.intended_use || ''} onChange={(e) => set({ intended_use: e.target.value || undefined })}><option value="">—</option>{USES.map((u) => <option key={u}>{u}</option>)}</select></label>}
-      {at('expanded') && !v.id && <Ladder base={v} />}
+      {show('intended_use') && <label className="field"><span>Intended use</span><select value={v.intended_use || ''} onChange={(e) => set({ intended_use: e.target.value || undefined })}><option value="">—</option>{USES.map((u) => <option key={u}>{u}</option>)}</select></label>}
+      {show('ladder') && !v.id && <Ladder base={v} />}
       <label className="field"><span>Prep notes</span><textarea rows={3} value={v.notes || ''} onChange={(e) => set({ notes: e.target.value })} /></label>
       <button className="btn primary">Save load</button>
       <button type="button" className="btn" onClick={onDone}>Cancel</button>
