@@ -75,6 +75,7 @@ export function CartridgeInput({ value, onChange, required }: { value?: string; 
   const { s, set } = useSettings();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
+  const [dia, setDia] = useState('');
   const all = [...CARTRIDGES.map((c) => ({ ...c, custom: false })), ...s.customCartridges.map((c) => ({ ...c, custom: true }))];
   const words = q.toLowerCase().split(/\s+/).filter(Boolean);
   const hits = all.filter((c) => words.every((w) => `${c.name} ${(c as any).aliases?.join(' ') || ''}`.toLowerCase().includes(w)));
@@ -82,8 +83,7 @@ export function CartridgeInput({ value, onChange, required }: { value?: string; 
   const pick = (n: string) => { onChange(n); setOpen(false); setQ(''); };
   const add = () => {
     const name = q.trim(); if (!name) return;
-    const d = prompt(`Bullet diameter for ${name} in inches (optional, e.g. .264)`);
-    set({ customCartridges: [...s.customCartridges, { name, bullet_dia: d ? Number(d) || undefined : undefined }] });
+    set({ customCartridges: [...s.customCartridges, { name, bullet_dia: Number(dia) || undefined }] }); setDia('');
     pick(name);
   };
   return (
@@ -97,7 +97,7 @@ export function CartridgeInput({ value, onChange, required }: { value?: string; 
             {hits.map((c) => <button type="button" key={c.name} className="result" onClick={() => pick(c.name)}>{c.name}{c.bullet_dia ? <span className="muted"> {c.bullet_dia.toFixed(3)}"</span> : null}{c.custom && <span className="muted"> · added by you</span>}</button>)}
             {!hits.length && <p className="muted small">No match.</p>}
           </div>
-          {q.trim() && !exact && <button type="button" className="btn small" onClick={add}>+ Add “{q.trim()}” as a new cartridge</button>}
+          {q.trim() && !exact && <div className="row"><input type="number" step="any" inputMode="decimal" placeholder='Bullet dia. (opt., .264)' value={dia} onChange={(e) => setDia(e.target.value)} /><button type="button" className="btn small" onClick={add}>+ Add “{q.trim()}”</button></div>}
         </div>
       )}
     </div>
