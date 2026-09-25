@@ -31,7 +31,7 @@ export function canonicalCartridge(input?: string): string | undefined {
 export const sameCartridge = (a?: string, b?: string) => !!a && !!b && norm(canonicalCartridge(a)!) === norm(canonicalCartridge(b)!);
 
 export type CatalogType = 'bullet' | 'powder' | 'primer' | 'case';
-export interface CatalogItem { key: string; type: CatalogType; manufacturer: string; product_name: string; caliber_or_size?: string; weight_grains?: number; bullet_diameter_inches?: number; bullet_type?: string }
+export interface CatalogItem { g1?: number; g7?: number; burn_rank?: number; form?: string; key: string; type: CatalogType; manufacturer: string; product_name: string; caliber_or_size?: string; weight_grains?: number; bullet_diameter_inches?: number; bullet_type?: string }
 
 // Bullets: [manufacturer, line, type, diameter, weights[]]
 const B: [string, string, string, number, number[]][] = [
@@ -92,11 +92,26 @@ const primers: CatalogItem[] = PR.map(([m, n, sz]) => ({ key: `primer:${slug(m)}
 export const CASE_BRANDS = ['Lapua', 'Peterson', 'Alpha Munitions', 'Starline', 'Hornady', 'Norma', 'Nosler', 'Winchester', 'Federal', 'Remington', 'ADG', 'Gunwerks', 'Lake City', 'Mixed / range pickup'];
 export const caseItem = (brand: string, cartridge: string): CatalogItem => ({ key: `case:${slug(brand)}:${slug(cartridge)}`, type: 'case', manufacturer: brand, product_name: `${cartridge} brass`, caliber_or_size: cartridge });
 
-export const CATALOG: CatalogItem[] = [...bullets, ...powders, ...primers];
+import GEN from './generated.json';
+type G = { bullets: { manufacturer: string; line: string; d: number; w: number; t?: string; g1?: number; g7?: number }[]; powders: { manufacturer: string; name: string; use?: string; form?: string; rank?: number }[]; primers: { manufacturer: string; name: string; size?: string }[]; cases: { manufacturer: string; cartridge: string; notes?: string }[] };
+const g = GEN as unknown as G;
+const genBullets: CatalogItem[] = g.bullets.map((b) => ({ key: `bullet:${slug(b.manufacturer)}:${slug(b.line)}:${b.d}:${b.w}`, type: 'bullet', manufacturer: b.manufacturer, product_name: `${b.line} ${b.w} gr`, caliber_or_size: `${b.d.toFixed(3)}"`, weight_grains: b.w, bullet_diameter_inches: b.d, bullet_type: b.t, g1: b.g1, g7: b.g7 }));
+const genPowders: CatalogItem[] = g.powders.map((p) => ({ key: `powder:${slug(p.manufacturer)}:${slug(p.name)}`, type: 'powder', manufacturer: p.manufacturer, product_name: p.name, caliber_or_size: p.use || undefined, form: p.form || undefined, burn_rank: p.rank || undefined }));
+const genPrimers: CatalogItem[] = g.primers.map((p) => ({ key: `primer:${slug(p.manufacturer)}:${slug(p.name)}`, type: 'primer', manufacturer: p.manufacturer, product_name: p.name, caliber_or_size: p.size || undefined }));
+export const GEN_CASES: CatalogItem[] = g.cases.map((c) => ({ ...caseItem(c.manufacturer, c.cartridge), bullet_type: c.notes || undefined }));
+const merge = (...lists: CatalogItem[][]) => { const m = new Map<string, CatalogItem>(); lists.flat().forEach((i) => m.set(i.key, { ...m.get(i.key), ...i })); return [...m.values()]; };
+export const CATALOG: CatalogItem[] = merge(bullets, genBullets, powders, genPowders, primers, genPrimers);
+export const CATALOG_COUNTS = { bullets: CATALOG.filter((i) => i.type === 'bullet').length, powders: CATALOG.filter((i) => i.type === 'powder').length, primers: CATALOG.filter((i) => i.type === 'primer').length, cases: GEN_CASES.length };
 export function searchCatalog(type: CatalogType, q: string, opts?: { diameter?: number; cartridge?: string }): CatalogItem[] {
-  if (type === 'case') { const c = opts?.cartridge || ''; return CASE_BRANDS.map((b) => caseItem(b, c || 'Case')).filter((i) => `${i.manufacturer} ${i.product_name}`.toLowerCase().includes(q.toLowerCase())); }
+  if (type === 'case') {
+    const c = opts?.cartridge || '';
+    const words0 = q.toLowerCase().split(/\s+/).filter(Boolean);
+    const specific = GEN_CASES.filter((i) => !c || sameCartridge(i.caliber_or_size, c));
+    const generic = c ? CASE_BRANDS.filter((b) => !specific.some((x) => x.manufacturer === b)).map((b) => caseItem(b, c)) : [];
+    return [...specific, ...generic].filter((i) => words0.every((w) => `${i.manufacturer} ${i.product_name}`.toLowerCase().includes(w))).slice(0, 60);
+  }
   const words = q.toLowerCase().split(/\s+/).filter(Boolean);
-  return CATALOG.filter((i) => i.type === type && (!opts?.diameter || !i.bullet_diameter_inches || Math.abs(i.bullet_diameter_inches - opts.diameter) < 0.0015) && words.every((w) => `${i.manufacturer} ${i.product_name} ${i.caliber_or_size || ''} ${i.bullet_type || ''}`.toLowerCase().includes(w))).slice(0, 40);
+  return CATALOG.filter((i) => i.type === type && (!opts?.diameter || !i.bullet_diameter_inches || Math.abs(i.bullet_diameter_inches - opts.diameter) < 0.0015) && words.every((w) => `${i.manufacturer} ${i.product_name} ${i.caliber_or_size || ''} ${i.bullet_type || ''}`.toLowerCase().includes(w))).slice(0, 60);
 }
 let CUSTOM: Cartridge[] = [];
 export const setCustomCartridges = (c: Cartridge[]) => { CUSTOM = c; };

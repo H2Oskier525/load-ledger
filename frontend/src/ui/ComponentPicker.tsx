@@ -10,9 +10,12 @@ const LABEL: Record<CatalogType, string> = { bullet: 'Bullet', powder: 'Powder',
 export async function addFromCatalog(item: CatalogItem, extra?: Partial<Component>): Promise<string> {
   const existing = alive(await db.components.where('catalog_key').equals(item.key).toArray())[0];
   if (existing) return existing.id;
-  const { key, ...rest } = item;
-  return save('components', { ...rest, catalog_key: key, is_quick_add: false, ...extra });
+  const { key, manufacturer, product_name, caliber_or_size, weight_grains, bullet_diameter_inches, bullet_type, type, g1, g7, burn_rank } = item;
+  const notes = [g1 && `G1 BC ${g1}`, g7 && `G7 BC ${g7}`, burn_rank && `Hodgdon burn-rate chart #${burn_rank}`].filter(Boolean).join(' · ') || undefined;
+  return save('components', { type, manufacturer, product_name, caliber_or_size, weight_grains, bullet_diameter_inches, bullet_type, notes, catalog_key: key, is_quick_add: false, ...extra });
 }
+
+export const catalogDetail = (i: CatalogItem) => [i.caliber_or_size, i.bullet_type, i.g1 && `G1 ${i.g1}`, i.g7 && `G7 ${i.g7}`, i.form, i.burn_rank && `burn order #${i.burn_rank}`].filter(Boolean).join(' · ');
 
 export function componentLabel(c?: Component) {
   return c ? `${c.manufacturer ? c.manufacturer + ' ' : ''}${c.product_name}` : '';
@@ -28,7 +31,7 @@ export function LibrarySearch({ type, diameter, cartridge, onPick, onQuickAdd }:
       <input autoFocus placeholder={`Search ${LABEL[type].toLowerCase()} library…`} value={q} onChange={(e) => setQ(e.target.value)} />
       {diameter && type === 'bullet' && <label className="check"><input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} /> Show all diameters (showing {diameter.toFixed(3)}")</label>}
       <div className="results">
-        {res.map((i) => <button type="button" key={i.key} className="result" onClick={() => onPick(i)}><b>{i.manufacturer}</b> {i.product_name}<span className="muted"> {[i.caliber_or_size, i.bullet_type].filter(Boolean).join(' · ')}</span></button>)}
+        {res.map((i) => <button type="button" key={i.key} className="result" onClick={() => onPick(i)}><b>{i.manufacturer}</b> {i.product_name}<span className="muted"> {catalogDetail(i)}</span></button>)}
         {!res.length && <p className="muted small">No library match.</p>}
       </div>
       {onQuickAdd && q.trim() && <button type="button" className="btn small" onClick={() => onQuickAdd(q.trim())}>Quick add “{q.trim()}” (link to library later)</button>}

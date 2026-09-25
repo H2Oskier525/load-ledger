@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, alive, save, remove, type LibraryNote } from '../data/db';
-import { CARTRIDGES, searchCatalog, sameCartridge, type CatalogType } from '../catalog/catalog';
-import { addFromCatalog, CartridgeInput } from '../ui/ComponentPicker';
+import { CATALOG_COUNTS, CARTRIDGES, searchCatalog, sameCartridge, type CatalogType } from '../catalog/catalog';
+import { addFromCatalog, CartridgeInput, catalogDetail } from '../ui/ComponentPicker';
 import { useSettings } from '../lib/settings';
 
 const SOURCES: Record<LibraryNote['source_type'], string> = { my_note: 'My note', saved_reference: 'Saved reference', manufacturer: 'Manufacturer-published', anecdotal: 'Anecdotal / field report' };
@@ -73,13 +73,13 @@ export default function Library() {
       </>}
 
       {tab === 'components' && libOn && <>
-        <div className="seg small">{(['bullet', 'powder', 'primer'] as CatalogType[]).map((t) => <button key={t} className={ctype === t ? 'on' : ''} onClick={() => setCtype(t)}>{t[0].toUpperCase() + t.slice(1)}s</button>)}</div>
-        <div className="grid2"><input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} />{ctype === 'bullet' && <CartridgeInput value={cart} onChange={setCart} />}</div>
+        <div className="seg small">{(['bullet', 'powder', 'primer', 'case'] as CatalogType[]).map((t) => <button key={t} className={ctype === t ? 'on' : ''} onClick={() => setCtype(t)}>{t === 'case' ? 'Brass' : t[0].toUpperCase() + t.slice(1) + 's'}</button>)}</div>
+        <div className="grid2"><input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} />{(ctype === 'bullet' || ctype === 'case') && <CartridgeInput value={cart} onChange={setCart} />}</div>
         {msg && <p className="muted small">{msg}</p>}
-        <div className="results tall">{searchCatalog(ctype, q, { diameter: ctype === 'bullet' ? dia : undefined }).map((i) => (
-          <div key={i.key} className="result row"><span><b>{i.manufacturer}</b> {i.product_name}<span className="muted"> {[i.caliber_or_size, i.bullet_type].filter(Boolean).join(' · ')}</span></span>
+        <div className="results tall">{searchCatalog(ctype, q, { diameter: ctype === 'bullet' ? dia : undefined, cartridge: cart }).map((i) => (
+          <div key={i.key} className="result row"><span><b>{i.manufacturer}</b> {i.product_name}<span className="muted"> {catalogDetail(i)}</span></span>
             <button className="btn small" onClick={async () => { await addFromCatalog(i); setMsg(`Added ${i.manufacturer} ${i.product_name} to your components.`); }}>Add</button></div>))}</div>
-        <p className="muted small">Starter library of common products (names and sizes only). Missing something? Quick add it from Components.</p>
+        <p className="muted small">{CATALOG_COUNTS.bullets} bullets · {CATALOG_COUNTS.powders} powders · {CATALOG_COUNTS.primers} primers · {CATALOG_COUNTS.cases} brass products, collected from maker catalogs and charts (Sierra, Hornady, Nosler, Speer, Barnes, Berger, Lapua, Hammer; Hodgdon burn-rate chart; CCI, Federal, Winchester, Remington; Hornady, Starline, Nosler, Lapua, Peterson, Alpha, Norma brass). Specs and BCs are as published; verify before relying on them. Missing something? Quick add it from Components.</p>
       </>}
 
       {tab === 'cartridges' && libOn && <>
